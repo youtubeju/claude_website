@@ -1,5 +1,0 @@
-# Dépendances Node réinstallables (voir .claude/skills/btp-site-modernizer/scripts/README.md)
-node_modules/
-
-# Fichiers système
-.DS_Store
