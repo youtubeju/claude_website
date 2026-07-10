@@ -1,0 +1,55 @@
+:root {
+  /* Couleurs — palette dérivée du vrai logo Ets Lévêque (rouge + bleu) */
+  --teal-deep: #0D3B3E;
+  --blue: #18A1B4;       /* bleu du logo */
+  --blue-dark: #0F7A8C;  /* bleu du logo, hover/foncé */
+  --blue-light: #6FCADB; /* bleu du logo, tint clair */
+  --teal-active: var(--blue);
+  --red: #FF0000;        /* rouge du logo */
+  --red-dark: #C40000;   /* rouge du logo, hover/foncé */
+  --slate: #1A2426;
+  --mist: #F1F4F3;
+  --white: #FFFFFF;
+
+  /* Typographie */
+  --font-display: "Archivo", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --fs-xs: 12px;
+  --fs-sm: 14px;
+  --fs-base: 16px;
+  --fs-md: 20px;
+  --fs-lg: 28px;
+  --fs-xl: 40px;
+  --fs-2xl: 56px;
+
+  --lh-tight: 1.1;
+  --lh-body: 1.5;
+
+  /* Espacement — base 8px */
+  --sp-1: 8px;
+  --sp-2: 16px;
+  --sp-3: 24px;
+  --sp-4: 32px;
+  --sp-5: 40px;
+  --sp-6: 48px;
+  --sp-8: 64px;
+  --sp-10: 80px;
+  --sp-12: 96px;
+
+  /* Mouvement */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 250ms;
+  --dur-base: 500ms;
+
+  --radius: 8px;
+  --shadow-soft: 0 12px 32px -12px rgba(13, 59, 62, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+  }
+}
