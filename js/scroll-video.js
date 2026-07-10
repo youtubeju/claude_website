@@ -23,9 +23,12 @@ function initChapters(section) {
 }
 
 // Fenêtre de bitmaps décodés conservés en mémoire autour de la frame
-// courante — évite de garder les 80 images d'une section entièrement
-// décodées en RAM en permanence.
-const BITMAP_WINDOW = 30;
+// courante. Ces images sont en 1280x720 : chaque bitmap décodé pèse
+// plusieurs Mo en RAM, une fenêtre trop large fait ramer le scroll au lieu
+// de l'améliorer — on reste volontairement modeste ici.
+const BITMAP_WINDOW = 16;
+// Nombre de frames décodées à l'avance dans le sens du scroll.
+const DECODE_LOOKAHEAD = 6;
 
 function initScrollVideo(section, priority) {
   const canvas = section.querySelector(".scrollvid__canvas");
@@ -54,8 +57,28 @@ function initScrollVideo(section, priority) {
 
   video.remove();
   const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // Plafonné à 1 : dessiner en résolution native de l'écran (x2 sur retina)
+  // double ou quadruple le coût de chaque drawImage, ce qui fait décrocher
+  // le scroll sur les machines modestes.
+  const dpr = 1;
   const updateChapters = initChapters(section);
+  const chaptersEl = section.querySelector(".scrollvid__chapters");
+
+  // Le texte du dernier chapitre s'efface avant la fin du scroll, pour ne
+  // jamais être coupé net par la section suivante qui remonte par-dessus.
+  const CHAPTER_FADE_OUT_START = Number(section.dataset.fadeOutStart) || 0.82;
+  const CHAPTER_FADE_OUT_END = Number(section.dataset.fadeOutEnd) || 0.88;
+  function updateChaptersFadeOut(progress) {
+    if (!chaptersEl) return;
+    const fade =
+      progress <= CHAPTER_FADE_OUT_START
+        ? 1
+        : Math.max(
+            0,
+            1 - (progress - CHAPTER_FADE_OUT_START) / (CHAPTER_FADE_OUT_END - CHAPTER_FADE_OUT_START)
+          );
+    chaptersEl.style.opacity = fade;
+  }
 
   // rawImages : simples <img> pour récupérer les octets (léger, mis en cache HTTP).
   // bitmaps : ImageBitmap décodés de façon asynchrone hors thread principal,
@@ -146,13 +169,6 @@ function initScrollVideo(section, priority) {
     lastDrawn = -1;
   }
 
-  function scrollProgress() {
-    const rect = section.getBoundingClientRect();
-    const scrollableDistance = section.offsetHeight - window.innerHeight;
-    const scrolled = -rect.top;
-    return Math.min(Math.max(scrolled / scrollableDistance, 0), 1);
-  }
-
   function frameForProgress(progress) {
     return Math.min(frameCount - 1, Math.floor(progress * frameCount));
   }
@@ -164,15 +180,30 @@ function initScrollVideo(section, priority) {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
-      const progress = scrollProgress();
+      const rect = section.getBoundingClientRect();
+      // Cette section est loin de l'écran (l'autre vidéo est en cours de
+      // scroll) : on saute tout le travail coûteux (décodage, dessin sur
+      // canvas). Les deux sections vidéo ont chacune leur propre listener
+      // de scroll ; sans cette garde, les deux tournent à plein régime en
+      // permanence, ce qui double le travail pour rien.
+      if (rect.bottom < -window.innerHeight || rect.top > window.innerHeight * 2) {
+        ticking = false;
+        return;
+      }
+      const scrollableDistance = section.offsetHeight - window.innerHeight;
+      const progress = Math.min(Math.max(-rect.top / scrollableDistance, 0), 1);
       currentFrame = frameForProgress(progress);
       draw(currentFrame);
-      // Décode par avance les prochaines frames dans le sens du scroll,
-      // pour qu'elles soient déjà prêtes quand on les atteint.
-      for (let k = 1; k <= 4; k++) {
+      // Décode par avance dans le sens du scroll (et un peu en arrière)
+      // pour que les prochaines frames soient prêtes quand on les atteint.
+      for (let k = 1; k <= DECODE_LOOKAHEAD; k++) {
         decodeFrame(Math.min(frameCount - 1, currentFrame + k));
       }
+      for (let k = 1; k <= 2; k++) {
+        decodeFrame(Math.max(0, currentFrame - k));
+      }
       if (updateChapters) updateChapters(progress);
+      updateChaptersFadeOut(progress);
       ticking = false;
     });
   }
@@ -185,7 +216,7 @@ function initScrollVideo(section, priority) {
     img.src = framePath(i + 1);
     rawImages[i] = img;
     img.onload = () => {
-      if (Math.abs(i - currentFrame) <= 6) decodeFrame(i);
+      if (Math.abs(i - currentFrame) <= DECODE_LOOKAHEAD) decodeFrame(i);
     };
   }
 
@@ -202,8 +233,10 @@ function initScrollVideo(section, priority) {
           : setTimeout(() => loadChunk(), 50);
       }
     }
-    // Les premières frames sont prioritaires et chargées sans attendre l'idle.
-    const head = Math.min(10, frameCount);
+    // Les toutes premières frames sont chargées sans attendre l'idle, le
+    // reste suit progressivement pour ne pas saturer le réseau/le thread
+    // principal au chargement de la page.
+    const head = Math.min(12, frameCount);
     for (let i = 0; i < head; i++) fetchFrame(i);
     window.requestIdleCallback
       ? requestIdleCallback(loadChunk)
@@ -226,7 +259,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const sections = document.querySelectorAll(".scrollvid");
   sections.forEach((section, i) => {
     // La première section (hero) charge en priorité haute ; les suivantes
-    // en priorité basse pour ne jamais lui voler de bande passante.
+    // en priorité basse pour ne jamais lui voler de bande passante au
+    // chargement initial de la page.
     initScrollVideo(section, i === 0 ? "high" : "low");
   });
 });

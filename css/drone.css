@@ -1,5 +1,5 @@
 .drone {
-  height: 220vh; /* espace de scroll dédié au scrub de la vidéo + 2 chapitres de copy */
+  height: 300vh; /* scrub vidéo (8s) + 2 chapitres + palier final avant le slide des avis */
 }
 
 .drone__overlay {
