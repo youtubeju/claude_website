@@ -1,5 +1,5 @@
 .partners {
-  padding: var(--sp-6) 0;
+  padding: var(--sp-4) 0;
   background: var(--mist);
 }
 
@@ -25,7 +25,7 @@
 }
 
 .partners__set img {
-  height: 100px;
+  height: 130px;
   width: auto;
   object-fit: contain;
 }
@@ -41,5 +41,5 @@
 
 @media (max-width: 560px) {
   .partners__set { gap: var(--sp-5); padding-inline: var(--sp-5); }
-  .partners__set img { height: 60px; }
+  .partners__set img { height: 76px; }
 }

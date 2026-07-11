@@ -2,6 +2,14 @@
   height: 300vh; /* scrub vidéo (8s) + 2 chapitres + palier final avant le slide des avis */
 }
 
+/* Même principe que le hero : frame 1 en fond dès le chargement, pas de flash uni. */
+.drone .scrollvid__sticky {
+  background-image: url("../assets/hero-frames-2/frame_001.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .drone__overlay {
   position: absolute;
   inset: 0;

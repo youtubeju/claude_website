@@ -7,10 +7,12 @@
 <meta name="description" content="Ets Lévêque, votre chauffagiste à Notre Dame de Sanilhac : chauffage, sanitaire-plomberie, électricité générale, entretien-ramonage et dépannage sur Périgueux et ses alentours." />
 <link rel="icon" href="assets/img/logos/logo-ets-leveque-v3.png" />
 
+<link rel="preload" as="image" href="assets/hero-frames/frame_001.webp" fetchpriority="high" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
-  href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,75..125,400..900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,75..125,400..900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@800;900&display=swap"
   rel="stylesheet"
 />
 
@@ -20,6 +22,7 @@
 <link rel="stylesheet" href="css/scrollvid.css" />
 <link rel="stylesheet" href="css/hero.css" />
 <link rel="stylesheet" href="css/drone.css" />
+<link rel="stylesheet" href="css/stove.css" />
 <link rel="stylesheet" href="css/stats.css" />
 <link rel="stylesheet" href="css/activities.css" />
 <link rel="stylesheet" href="css/reviews.css" />
@@ -114,8 +117,8 @@
     data-frame-count="80"
     data-frame-prefix="assets/hero-frames-2/frame_"
     data-frame-ext="webp"
-    data-fade-out-start="0.82"
-    data-fade-out-end="0.88"
+    data-fade-out-start="1"
+    data-fade-out-end="1.05"
   >
     <div class="scrollvid__sticky">
       <canvas class="scrollvid__canvas"></canvas>
@@ -134,7 +137,7 @@
           <h2 class="scrollvid__chapter-title"><span class="word-mask"><span class="word">Énergies</span></span> <span class="word-mask"><span class="word">renouvelables</span></span></h2>
           <p class="scrollvid__chapter-text">Solaire, pompes à chaleur, solutions bas carbone</p>
         </div>
-        <div class="scrollvid__chapter" data-from="0.725">
+        <div class="scrollvid__chapter" data-from="0.68">
           <p class="scrollvid__chapter-eyebrow">Nos solutions</p>
           <h2 class="scrollvid__chapter-title"><span class="word-mask"><span class="word">Électricité</span></span> <span class="word-mask"><span class="word">générale</span></span></h2>
           <p class="scrollvid__chapter-text">Mise aux normes, installation et dépannage électrique</p>
@@ -347,80 +350,88 @@
     </div>
   </section>
 
+  <!-- VIDÉO POÊLE — juste après les avis clients. Pas de scroll-scrub ici :
+       simple vidéo qui se joue une fois quand la section est bien visible,
+       puis s'arrête sur la dernière image (pas de boucle). -->
+  <section class="stove" id="poele">
+    <div class="stove__frame">
+      <video
+        class="stove__video video-inview"
+        src="assets/video/interieur-poele.mp4"
+        poster="assets/img/photos/interieur-poele-poster.webp"
+        muted
+        playsinline
+        preload="none"
+      ></video>
+      <div class="stove__overlay"></div>
+      <div class="stove__content video-inview-reveal">
+        <h2 class="stove__title">Chauffage</h2>
+        <p class="stove__text">Installation, entretien et dépannage de vos systèmes de chauffage</p>
+      </div>
+    </div>
+  </section>
+
   <!-- PHASE 2 — CHIFFRES CLÉS -->
   <section class="stats" id="chiffres">
+    <div class="certs__marquee reveal">
+      <div class="certs__track">
+        <div class="certs__set">
+          <img src="assets/img/logos/rge-qualipac.png" alt="RGE QualiPAC" loading="lazy" />
+          <img src="assets/img/logos/rge-qualisol.png" alt="RGE QualiSol" loading="lazy" />
+          <img src="assets/img/logos/rge-qualibois.png" alt="RGE QualiBois" loading="lazy" />
+          <img src="assets/img/logos/rge-chauffage-plus.png" alt="RGE Chauffage+" loading="lazy" />
+          <img src="assets/img/logos/rge-pro-gaz.png" alt="Professionnel du Gaz Maintenance" loading="lazy" />
+          <img src="assets/img/logos/rge-qualibat.png" alt="RGE Qualibat" loading="lazy" />
+        </div>
+        <div class="certs__set" aria-hidden="true">
+          <img src="assets/img/logos/rge-qualipac.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-qualisol.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-qualibois.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-chauffage-plus.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-pro-gaz.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-qualibat.png" alt="" loading="lazy" />
+        </div>
+        <div class="certs__set" aria-hidden="true">
+          <img src="assets/img/logos/rge-qualipac.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-qualisol.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-qualibois.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-chauffage-plus.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-pro-gaz.png" alt="" loading="lazy" />
+          <img src="assets/img/logos/rge-qualibat.png" alt="" loading="lazy" />
+        </div>
+      </div>
+    </div>
+
     <div class="container">
-      <h2>Notre entreprise en chiffres</h2>
-      <div class="stats__grid">
+      <div class="stats__header reveal">
+        <h2>Notre entreprise en chiffres</h2>
+      </div>
 
-        <div class="stat reveal" data-target="39">
-          <div class="stat__gauge-wrap">
-            <svg class="stat__gauge" viewBox="0 0 120 120">
-              <circle class="stat__gauge-track" cx="60" cy="60" r="50" />
-              <circle class="stat__gauge-fill" cx="60" cy="60" r="50" />
-            </svg>
-            <span class="stat__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
-            </span>
-            <span class="stat__value">0</span>
-          </div>
-          <span class="stat__label">Années d'expérience</span>
+      <div class="meters">
+
+        <div class="meter reveal" data-target="39" data-unit="ans">
+          <div class="meter__readout"></div>
+          <span class="meter__label">Années d'expérience</span>
         </div>
 
-        <div class="stat reveal" data-target="641">
-          <div class="stat__gauge-wrap">
-            <svg class="stat__gauge" viewBox="0 0 120 120">
-              <circle class="stat__gauge-track" cx="60" cy="60" r="50" />
-              <circle class="stat__gauge-fill" cx="60" cy="60" r="50" />
-            </svg>
-            <span class="stat__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.2 7-12a7 7 0 1 0-14 0c0 4.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>
-            </span>
-            <span class="stat__value">0</span>
-          </div>
-          <span class="stat__label">Communes visitées</span>
+        <div class="meter reveal" data-target="641">
+          <div class="meter__readout"></div>
+          <span class="meter__label">Communes visitées</span>
         </div>
 
-        <div class="stat reveal" data-target="4595">
-          <div class="stat__gauge-wrap">
-            <svg class="stat__gauge" viewBox="0 0 120 120">
-              <circle class="stat__gauge-track" cx="60" cy="60" r="50" />
-              <circle class="stat__gauge-fill" cx="60" cy="60" r="50" />
-            </svg>
-            <span class="stat__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s5 4.5 5 9a5 5 0 1 1-10 0c0-1.2.5-2 1.2-3 .1 1 .8 1.6 1.4 1.6-.4-2 .4-4.2 2.4-7.6Z"/></svg>
-            </span>
-            <span class="stat__value">0</span>
-          </div>
-          <span class="stat__label">Ramonages / entretiens réalisés en 2025</span>
+        <div class="meter reveal" data-target="4595">
+          <div class="meter__readout"></div>
+          <span class="meter__label">Ramonages &amp; entretiens réalisés en 2025</span>
         </div>
 
-        <div class="stat reveal" data-target="210">
-          <div class="stat__gauge-wrap">
-            <svg class="stat__gauge" viewBox="0 0 120 120">
-              <circle class="stat__gauge-track" cx="60" cy="60" r="50" />
-              <circle class="stat__gauge-fill" cx="60" cy="60" r="50" />
-            </svg>
-            <span class="stat__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16v2a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-2Z"/><path d="M6 12V6a2 2 0 0 1 3.4-1.4"/><path d="M7 18v2M15 18v2"/></svg>
-            </span>
-            <span class="stat__value">0</span>
-          </div>
-          <span class="stat__label">Salles de bain réalisées</span>
+        <div class="meter reveal" data-target="210">
+          <div class="meter__readout"></div>
+          <span class="meter__label">Salles de bain réalisées</span>
         </div>
 
-        <div class="stat reveal" data-target="3990">
-          <div class="stat__gauge-wrap">
-            <svg class="stat__gauge" viewBox="0 0 120 120">
-              <circle class="stat__gauge-track" cx="60" cy="60" r="50" />
-              <circle class="stat__gauge-fill" cx="60" cy="60" r="50" />
-            </svg>
-            <span class="stat__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6c3 0 3 3 6 3s3-3 6-3 3 3 6 3M3 15c3 0 3 3 6 3s3-3 6-3 3 3 6 3"/></svg>
-            </span>
-            <span class="stat__value">0</span>
-          </div>
-          <span class="stat__label">Mètres de cuivre déroulés en 2025</span>
+        <div class="meter reveal" data-target="3990" data-unit="m">
+          <div class="meter__readout"></div>
+          <span class="meter__label">Mètres de cuivre déroulés en 2025</span>
         </div>
 
       </div>
@@ -521,5 +532,6 @@
 <script src="js/scroll-video.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/reveal.js"></script>
+<script src="js/video-inview.js"></script>
 </body>
 </html>

@@ -1,16 +1,23 @@
 .reviews {
   padding: var(--sp-10) 0 var(--sp-12);
-  background: var(--mist);
+  background: var(--blue-mid);
   position: relative;
   z-index: 3;
-  margin-top: -20vh;
+  /* Recouvrement réduit au minimum (juste l'arrondi) : les avis n'arrivent
+     visuellement qu'une fois la vidéo drone terminée, pas pendant que le
+     texte "Électricité générale" est encore affiché/en train de s'effacer. */
+  margin-top: -48px;
+  /* Seulement les coins du haut : le bas de la section touche directement
+     la vidéo poêle qui suit, arrondir aussi le bas laisse un trou qui
+     révèle la vidéo drone en dessous (à cause du recouvrement négatif
+     ci-dessus). */
   border-radius: 56px 56px 0 0;
   box-shadow: 0 -60px 120px -30px rgba(13, 59, 62, 0.5);
 }
 
 @media (max-width: 768px) {
   .reviews {
-    margin-top: -80px;
+    margin-top: -32px;
     border-radius: 28px 28px 0 0;
     padding-top: calc(var(--sp-10) + 32px);
   }
@@ -47,14 +54,15 @@
   letter-spacing: -0.02em;
   margin-top: var(--sp-3);
   margin-bottom: 0;
+  color: var(--white);
 }
 
 .reviews__intro {
   text-align: center;
   margin-top: var(--sp-3);
   margin-bottom: 0;
-  color: var(--slate);
-  opacity: 0.75;
+  color: var(--white);
+  opacity: 0.85;
 }
 
 .reviews__stars { color: var(--red); letter-spacing: 2px; }

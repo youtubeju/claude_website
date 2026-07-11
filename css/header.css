@@ -12,11 +12,11 @@
 }
 
 .site-header__logo {
-  margin-left: 12vw;
+  margin-left: 6vw;
 }
 
 .site-header__logo img {
-  height: 76px;
+  height: 108px;
   width: auto;
 }
 
@@ -25,7 +25,7 @@
     margin-left: var(--sp-2);
   }
   .site-header__logo img {
-    height: 56px;
+    height: 78px;
   }
 }
 

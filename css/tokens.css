@@ -4,6 +4,7 @@
   --blue: #18A1B4;       /* bleu du logo */
   --blue-dark: #0F7A8C;  /* bleu du logo, hover/foncé */
   --blue-light: #6FCADB; /* bleu du logo, tint clair */
+  --blue-mid: #49A6B2;   /* bleu intermédiaire, fond section avis */
   --teal-active: var(--blue);
   --red: #FF0000;        /* rouge du logo */
   --red-dark: #C40000;   /* rouge du logo, hover/foncé */
@@ -15,6 +16,7 @@
   --font-display: "Archivo", sans-serif;
   --font-body: "IBM Plex Sans", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
+  --font-numeral: "Inter", sans-serif; /* gros chiffres d'impact (section "en chiffres") */
 
   --fs-xs: 12px;
   --fs-sm: 14px;

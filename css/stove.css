@@ -1,0 +1,90 @@
+.stove {
+  height: 100vh;
+  position: relative;
+}
+
+.stove__frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--teal-deep);
+}
+
+.stove__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stove__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 59, 62, 0.25) 0%,
+    rgba(13, 59, 62, 0) 20%,
+    rgba(13, 59, 62, 0) 60%,
+    rgba(13, 59, 62, 0.75) 100%
+  );
+}
+
+.stove__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--sp-6) var(--sp-3) var(--sp-10);
+  max-width: 640px;
+}
+
+/* Apparition déclenchée au démarrage de la vidéo (voir js/video-inview.js),
+   même langage visuel que les chapitres de la vidéo drone : flou + léger
+   glissement vers le haut, fondu. */
+.stove__title,
+.stove__text {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(16px);
+  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out),
+    filter 700ms var(--ease-out);
+}
+
+.stove__title {
+  color: var(--white);
+  margin-bottom: var(--sp-2);
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
+}
+
+.stove__text {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--fs-md);
+  max-width: 44ch;
+  margin: 0;
+  transition-delay: 150ms;
+}
+
+.stove__content.is-active .stove__title,
+.stove__content.is-active .stove__text {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stove__title,
+  .stove__text {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .stove__content { padding: var(--sp-4) var(--sp-2) var(--sp-6); }
+}

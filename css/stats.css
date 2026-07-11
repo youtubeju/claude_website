@@ -1,87 +1,183 @@
 .stats {
-  background: var(--teal-deep);
-  padding: var(--sp-10) 0;
+  background: var(--white);
+  padding: 120px 0 var(--sp-12);
+}
+
+@media (max-width: 768px) {
+  .stats { padding-top: 96px; }
+}
+
+.stats .container {
+  max-width: 1420px;
+}
+
+.stats__header {
+  text-align: center;
+  margin-bottom: var(--sp-5);
 }
 
 .stats h2 {
-  color: var(--white);
-  text-align: center;
-  margin-bottom: var(--sp-8);
+  margin: 0;
 }
 
-.stats__grid {
+.meters {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: var(--sp-4);
+  column-gap: var(--sp-6);
 }
 
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.meters .meter:nth-child(odd) { --accent: var(--blue-dark); }
+.meters .meter:nth-child(even) { --accent: var(--red-dark); }
+
+.meter {
+  padding: var(--sp-4) 0;
   text-align: center;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+  transition-delay: var(--meter-delay, 0ms);
 }
-
-.stat__gauge-wrap {
-  position: relative;
-  width: 112px;
-  height: 112px;
-  margin-bottom: var(--sp-2);
+.meter.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
+.meters .meter:nth-child(1) { --meter-delay: 0ms; }
+.meters .meter:nth-child(2) { --meter-delay: 120ms; }
+.meters .meter:nth-child(3) { --meter-delay: 240ms; }
+.meters .meter:nth-child(4) { --meter-delay: 360ms; }
+.meters .meter:nth-child(5) { --meter-delay: 480ms; }
 
-.stat__gauge {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.stat__gauge-track {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.12);
-  stroke-width: 6;
-}
-
-.stat__gauge-fill {
-  fill: none;
-  stroke: var(--blue);
-  stroke-width: 6;
-  stroke-linecap: round;
-  stroke-dasharray: 314;
-  stroke-dashoffset: 314;
-  transition: stroke-dashoffset 1.4s var(--ease-out);
-}
-
-.stat__icon {
-  position: absolute;
-  inset: 0;
+/* Le chiffre est le sujet : typo extra-noire, dégradé sobre aux couleurs de la marque. */
+.meter__readout {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
-  color: var(--blue-light);
+  font-family: var(--font-numeral);
+  font-weight: 900;
+  font-size: clamp(48px, 5.6vw, 76px);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  background-image: linear-gradient(160deg, var(--slate) 10%, var(--accent) 110%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  opacity: 0;
+  scale: 0.92;
+  filter: blur(8px);
+  translate: 0 0;
+  transition: opacity 750ms var(--ease-out) 120ms,
+    scale 750ms var(--ease-out) 120ms,
+    filter 750ms var(--ease-out) 120ms,
+    translate 300ms linear;
 }
-.stat__icon svg { width: 32px; height: 32px; }
-
-.stat__value {
-  position: absolute;
-  bottom: -34px;
-  left: 0;
-  right: 0;
-  font-family: var(--font-mono);
-  font-size: var(--fs-md);
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
+.meter.is-visible .meter__readout {
+  opacity: 1;
+  scale: 1;
+  filter: blur(0);
 }
 
-.stat__label {
-  margin-top: var(--sp-2);
-  font-size: var(--fs-sm);
-  color: rgba(255, 255, 255, 0.75);
-  max-width: 16ch;
+/* Survol — léger balayage entre l'encre et la couleur de la marque de ce chiffre,
+   pas un dégradé multicolore : on reste dans la palette simple du site. */
+.meter:hover .meter__readout {
+  background-image: linear-gradient(100deg, var(--slate) 0%, var(--accent) 35%, var(--slate) 70%, var(--accent) 100%);
+  background-size: 260% 100%;
+  animation: meter-wave 2.6s linear infinite;
+}
+
+@keyframes meter-wave {
+  0% { background-position: 0% 50%; }
+  100% { background-position: -160% 50%; }
+}
+
+.meter__unit {
+  font-family: var(--font-numeral);
+  font-weight: 900;
+  font-size: 0.42em;
+  margin-left: 2px;
+}
+
+.meter__label {
+  display: block;
+  margin-top: var(--sp-3);
+  margin-inline: auto;
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--slate);
+  max-width: 22ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter {
+    opacity: 1;
+    transform: none;
+  }
+  .meter__readout {
+    opacity: 1;
+    scale: 1;
+    filter: none;
+    translate: 0 0;
+    transition: none;
+  }
+  .meter:hover .meter__readout {
+    animation: none;
+    background-image: linear-gradient(160deg, var(--slate) 10%, var(--accent) 110%);
+  }
 }
 
 @media (max-width: 900px) {
-  .stats__grid {
-    grid-template-columns: repeat(2, 1fr);
-    row-gap: var(--sp-8);
-  }
+  .meters { grid-template-columns: repeat(2, 1fr); gap: var(--sp-3) 0; }
+}
+@media (max-width: 560px) {
+  .meters { grid-template-columns: 1fr; }
+}
+
+/* Certifications RGE — même mécanique de défilement infini que les logos
+   partenaires : fond transparent, pas de carte blanche ajoutée derrière
+   (les badges ont déjà leur propre plaque intégrée à l'image). */
+.certs__marquee {
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 130px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+}
+
+.certs__track {
+  display: flex;
+  width: max-content;
+  animation: certs-scroll 26s linear infinite;
+}
+
+.certs__set {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--sp-8);
+  padding-inline: var(--sp-8);
+}
+
+.certs__set img {
+  height: 88px;
+  width: auto;
+  object-fit: contain;
+  background: transparent;
+}
+
+@keyframes certs-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.3333%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .certs__track { animation: none; }
+}
+
+@media (max-width: 560px) {
+  .certs__marquee { margin-bottom: var(--sp-8); }
+  .certs__set { gap: var(--sp-5); padding-inline: var(--sp-5); }
+  .certs__set img { height: 62px; }
 }

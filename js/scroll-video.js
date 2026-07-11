@@ -22,13 +22,15 @@ function initChapters(section) {
   };
 }
 
-// Fenêtre de bitmaps décodés conservés en mémoire autour de la frame
-// courante. Ces images sont en 1280x720 : chaque bitmap décodé pèse
-// plusieurs Mo en RAM, une fenêtre trop large fait ramer le scroll au lieu
-// de l'améliorer — on reste volontairement modeste ici.
-const BITMAP_WINDOW = 16;
-// Nombre de frames décodées à l'avance dans le sens du scroll.
-const DECODE_LOOKAHEAD = 6;
+// Toutes les frames décodées sont conservées en mémoire pour la durée de
+// la page, sans éviction — c'est la configuration confirmée fluide par
+// l'utilisateur. Ne pas réintroduire de fenêtre bornée ici sans qu'il le
+// redemande explicitement : ça avait été essayé et ça n'a rien résolu.
+// Rayon de priorité autour de la position de scroll courante : au-delà du
+// chargement progressif en arrière-plan, on force le fetch+decode immédiat
+// des frames proches (symétrique avant/arrière) pour absorber un scroll
+// rapide dans n'importe quel sens, y compris en arrière.
+const PRIORITY_RADIUS = 12;
 
 function initScrollVideo(section, priority) {
   const canvas = section.querySelector(".scrollvid__canvas");
@@ -82,10 +84,9 @@ function initScrollVideo(section, priority) {
 
   // rawImages : simples <img> pour récupérer les octets (léger, mis en cache HTTP).
   // bitmaps : ImageBitmap décodés de façon asynchrone hors thread principal,
-  // uniquement pour une fenêtre de frames proches de la position courante.
+  // conservés pour toute la durée de la page une fois décodés.
   const rawImages = new Array(frameCount);
   const bitmaps = new Map();
-  const bitmapOrder = [];
   let pendingDecodes = new Set();
 
   function framePath(i) {
@@ -112,26 +113,6 @@ function initScrollVideo(section, priority) {
     ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
   }
 
-  function evictFarBitmaps(centerIndex) {
-    while (bitmapOrder.length > BITMAP_WINDOW) {
-      // Retire le bitmap le plus éloigné de la position actuelle plutôt
-      // qu'un simple FIFO, pour garder ceux utiles si l'utilisateur remonte.
-      let worst = -1;
-      let worstDist = -1;
-      for (let k = 0; k < bitmapOrder.length; k++) {
-        const dist = Math.abs(bitmapOrder[k] - centerIndex);
-        if (dist > worstDist) {
-          worstDist = dist;
-          worst = k;
-        }
-      }
-      const idx = bitmapOrder.splice(worst, 1)[0];
-      const bmp = bitmaps.get(idx);
-      if (bmp) bmp.close();
-      bitmaps.delete(idx);
-    }
-  }
-
   function decodeFrame(i) {
     if (bitmaps.has(i) || pendingDecodes.has(i)) return;
     const img = rawImages[i];
@@ -141,8 +122,6 @@ function initScrollVideo(section, priority) {
       .then((bitmap) => {
         pendingDecodes.delete(i);
         bitmaps.set(i, bitmap);
-        bitmapOrder.push(i);
-        evictFarBitmaps(currentFrame);
         if (i === currentFrame) draw(i);
       })
       .catch(() => {
@@ -194,13 +173,22 @@ function initScrollVideo(section, priority) {
       const progress = Math.min(Math.max(-rect.top / scrollableDistance, 0), 1);
       currentFrame = frameForProgress(progress);
       draw(currentFrame);
-      // Décode par avance dans le sens du scroll (et un peu en arrière)
-      // pour que les prochaines frames soient prêtes quand on les atteint.
-      for (let k = 1; k <= DECODE_LOOKAHEAD; k++) {
-        decodeFrame(Math.min(frameCount - 1, currentFrame + k));
-      }
-      for (let k = 1; k <= 2; k++) {
-        decodeFrame(Math.max(0, currentFrame - k));
+      // Priorité symétrique autour de la position courante — avant ET
+      // arrière — pour que le scroll soit tout aussi fluide qu'on avance
+      // ou qu'on revienne en arrière. Force le fetch (pas seulement le
+      // decode) au cas où le chargement progressif en arrière-plan n'ait
+      // pas encore atteint ces frames (ex: scroll rapide vers la fin).
+      for (let k = 1; k <= PRIORITY_RADIUS; k++) {
+        const fwd = currentFrame + k;
+        const bwd = currentFrame - k;
+        if (fwd <= frameCount - 1) {
+          fetchFrame(fwd);
+          decodeFrame(fwd);
+        }
+        if (bwd >= 0) {
+          fetchFrame(bwd);
+          decodeFrame(bwd);
+        }
       }
       if (updateChapters) updateChapters(progress);
       updateChaptersFadeOut(progress);
@@ -215,9 +203,7 @@ function initScrollVideo(section, priority) {
     if ("fetchPriority" in img) img.fetchPriority = priority;
     img.src = framePath(i + 1);
     rawImages[i] = img;
-    img.onload = () => {
-      if (Math.abs(i - currentFrame) <= DECODE_LOOKAHEAD) decodeFrame(i);
-    };
+    img.onload = () => decodeFrame(i);
   }
 
   function fetchAllFrames() {
@@ -233,10 +219,12 @@ function initScrollVideo(section, priority) {
           : setTimeout(() => loadChunk(), 50);
       }
     }
-    // Les toutes premières frames sont chargées sans attendre l'idle, le
-    // reste suit progressivement pour ne pas saturer le réseau/le thread
-    // principal au chargement de la page.
-    const head = Math.min(12, frameCount);
+    // Seule la section prioritaire (le hero) charge ses premières frames
+    // sans attendre l'idle. Les sections en priorité basse (drone) passent
+    // TOUTES par l'idle callback dès la frame 0 : sinon leur propre lot de
+    // fetches démarre en même temps que celui du hero au chargement de la
+    // page et lui vole de la bande passante au pire moment.
+    const head = priority === "high" ? Math.min(20, frameCount) : 0;
     for (let i = 0; i < head; i++) fetchFrame(i);
     window.requestIdleCallback
       ? requestIdleCallback(loadChunk)
