@@ -1,0 +1,190 @@
+/* Traitement plein cadre partagé par les sections "Nos services" #service-sanitaire
+   et #service-pac. Mêmes recettes typographiques et d'ombre que
+   .hero__eyebrow/.hero__title/.hero__subtitle (hero.css) et .stove__title/
+   .stove__text (stove.css), pour que ces panneaux soient indiscernables des
+   autres sections vidéo plein cadre du site — mais sans scroll-scrub : la
+   vidéo salle de bain avait d'abord été branchée sur js/scroll-video.js
+   (comme hero/drone), abandonné après avoir vu le rendu réel : le scrub
+   n'apportait rien ici et amplifiait le souci de recadrage ci-dessous — une
+   vidéo qui joue toute seule (autoplay/loop) est plus simple et suffisante. */
+
+.service-panel {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--teal-deep);
+}
+
+.service-panel__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 59, 62, 0.25) 0%,
+    rgba(13, 59, 62, 0) 20%,
+    rgba(13, 59, 62, 0) 60%,
+    rgba(13, 59, 62, 0.75) 100%
+  );
+}
+
+.service-panel__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: var(--sp-6) var(--sp-3) var(--sp-10);
+}
+
+.service-panel__kicker {
+  display: inline-block;
+  width: fit-content;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4dede1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 1), 0 1px 4px rgba(0, 0, 0, 0.9),
+    0 0 16px rgba(77, 237, 225, 0.35);
+  margin: 0 0 var(--sp-2);
+}
+
+.service-panel__title {
+  font-family: var(--font-display);
+  color: var(--white);
+  margin: 0 0 var(--sp-2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 12px rgba(0, 0, 0, 0.6),
+    0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.service-panel__text {
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  max-width: 46ch;
+  margin: 0;
+  color: var(--white);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.service-panel__text strong {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-weight: 700;
+}
+
+.service-panel__cta {
+  margin-top: var(--sp-4);
+}
+
+/* Apparition au scroll : même langage que .stove__title/.stove__text
+   (flou + léger glissement vers le haut, fondu), mais déclenchée par le
+   .reveal générique (js/reveal.js) plutôt qu'un état lié à une vidéo
+   verrouillée — ces sections n'ont pas de scroll-lock. */
+.service-panel__kicker,
+.service-panel__title,
+.service-panel__text,
+.service-panel__cta {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(16px);
+  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out),
+    filter 700ms var(--ease-out);
+}
+.service-panel__title { transition-delay: 100ms; }
+.service-panel__text { transition-delay: 200ms; }
+.service-panel__cta { transition-delay: 300ms; }
+
+.reveal.is-visible .service-panel__kicker,
+.reveal.is-visible .service-panel__title,
+.reveal.is-visible .service-panel__text,
+.reveal.is-visible .service-panel__cta {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-panel__kicker,
+  .service-panel__title,
+  .service-panel__text,
+  .service-panel__cta {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* --- Média : source (vidéo/photos) en 9:16, cadre plein écran en 16:9+.
+   object-fit:cover pur rognait le haut/bas du plan (le sujet cadré large en
+   portrait finit rogné en un bandeau serré une fois étiré à la largeur du
+   cadre desktop — "trop zoomé", cf. le premier essai) : un fond flouté/agrandi
+   du même visuel remplit les bords, et le média net est affiché en entier
+   par-dessus (object-fit:contain), sans rien couper. --- */
+.service-panel__media {
+  position: absolute;
+  inset: 0;
+}
+
+.service-panel__media-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(40px) brightness(0.55) saturate(1.1);
+  transform: scale(1.15);
+}
+
+.service-panel__media-fg,
+.service-panel__media-fg video,
+.service-panel__media-fg img,
+video.service-panel__media-fg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Pompe à Chaleur : les 2 photos "premier plan" crossfadent (même timing
+   qu'avant : 5s de cycle, 2.5s de décalage) ; le fond flouté reste une image
+   fixe (la 1ère photo) — les deux plans sont assez proches visuellement pour
+   qu'un fond flou figé ne se remarque pas, et ça évite de dupliquer/synchroniser
+   l'animation sur 4 calques au lieu de 2. */
+.service-panel__media-fg img {
+  opacity: 0;
+  animation-name: service-panel-fade;
+  animation-duration: 5s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-fill-mode: backwards;
+}
+.service-panel__media-fg img:nth-child(1) { animation-delay: 0s; }
+.service-panel__media-fg img:nth-child(2) { animation-delay: 2.5s; }
+
+@keyframes service-panel-fade {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  50%  { opacity: 1; }
+  62%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-panel__media-fg img {
+    animation: none;
+    opacity: 0;
+  }
+  .service-panel__media-fg img:first-child {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .service-panel__content { padding: var(--sp-4) var(--sp-2) var(--sp-6); }
+}

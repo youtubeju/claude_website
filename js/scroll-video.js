@@ -32,6 +32,80 @@ function initChapters(section) {
 // rapide dans n'importe quel sens, y compris en arrière.
 const PRIORITY_RADIUS = 12;
 
+// Sur un tunnel (Cloudflare quick tunnel, etc.), le flux vidéo traverse
+// beaucoup plus de sauts réseau qu'en local et peut se couper en cours de
+// route (coupure/latence côté edge, pas un problème côté fichier ou
+// serveur) — le <video> reste alors bloqué en erreur ou en attente
+// indéfiniment sans jamais se rattraper tout seul. Cette fonction relance
+// le chargement depuis le début (video.load() force un nouveau fetch de
+// la source) et restaure lecture/position, avec un compteur pour ne pas
+// boucler à l'infini si le réseau est vraiment mort.
+function attachNetworkRecovery(video, { resume } = {}) {
+  const MAX_RETRIES = 4;
+  let retries = 0;
+  let recovering = false;
+  let stallTimer = null;
+
+  function scheduleStallCheck() {
+    clearTimeout(stallTimer);
+    // readyState < 3 (HAVE_FUTURE_DATA) après ce délai pendant une lecture
+    // censée être active = on considère que le flux est bloqué.
+    stallTimer = setTimeout(() => {
+      if (!video.paused && !video.ended && video.readyState < 3) {
+        recover();
+      }
+    }, 5000);
+  }
+
+  function recover() {
+    if (recovering || retries >= MAX_RETRIES) return;
+    recovering = true;
+    retries++;
+    const wasTime = video.currentTime;
+    video.load();
+    video.addEventListener(
+      "loadedmetadata",
+      () => {
+        try {
+          video.currentTime = wasTime;
+        } catch (e) {}
+        video
+          .play()
+          .then(() => {
+            recovering = false;
+            if (resume) resume();
+          })
+          .catch(() => {
+            recovering = false;
+          });
+      },
+      { once: true }
+    );
+  }
+
+  video.addEventListener("error", recover);
+  video.addEventListener("stalled", recover);
+  video.addEventListener("waiting", scheduleStallCheck);
+  video.addEventListener("playing", () => clearTimeout(stallTimer));
+}
+
+// iOS bloque parfois play() même sur une vidéo muted+playsinline (mode
+// Basse consommation, ou réglage "Lecture automatique" du site désactivé
+// dans Safari) — la promesse est rejetée silencieusement et la vidéo reste
+// figée en readyState "metadata only" pour toujours, sans jamais lever
+// d'erreur (confirmé via le panneau de diagnostic sur un vrai iPhone : rs=1,
+// paused=true, no-error). Un vrai geste utilisateur (touchstart/click) lève
+// systématiquement cette restriction, donc on retente play() une seule fois
+// au premier geste si l'appel initial a échoué.
+function retryPlayOnGesture(playFn) {
+  const events = ["touchstart", "click"];
+  function handler() {
+    events.forEach((e) => document.removeEventListener(e, handler));
+    playFn();
+  }
+  events.forEach((e) => document.addEventListener(e, handler, { once: true, passive: true }));
+}
+
 function initScrollVideo(section, priority) {
   const canvas = section.querySelector(".scrollvid__canvas");
   const video = section.querySelector(".scrollvid__video");
@@ -46,14 +120,109 @@ function initScrollVideo(section, priority) {
   ).matches;
   const isSmallScreen = window.matchMedia("(max-width: 768px)").matches;
 
-  // Mobile / reduced-motion : vidéo native jouée en boucle, pas de scrub par canvas.
+  // Reduced-motion : vidéo native jouée en boucle, pas de scrub par canvas.
   // preload="none" dans le HTML : le fetch ne démarre qu'ici, jamais sur desktop.
-  if (isSmallScreen || prefersReducedMotion) {
+  if (prefersReducedMotion) {
     canvas.remove();
     video.preload = "auto";
     video.play().catch(() => {});
     const updateChapters = initChapters(section);
     if (updateChapters) updateChapters(0.12);
+    return;
+  }
+
+  // Mobile : pas de canvas (scrub inutile sans molette/trackpad fin).
+  if (isSmallScreen) {
+    canvas.remove();
+    const updateChapters = initChapters(section);
+    const chaptersEl = section.querySelector(".scrollvid__chapters");
+    const CHAPTER_FADE_OUT_START = Number(section.dataset.fadeOutStart) || 0.82;
+    const CHAPTER_FADE_OUT_END = Number(section.dataset.fadeOutEnd) || 0.88;
+
+    function updateChaptersFadeOutMobile(progress) {
+      if (!chaptersEl) return;
+      const fade =
+        progress <= CHAPTER_FADE_OUT_START
+          ? 1
+          : Math.max(
+              0,
+              1 - (progress - CHAPTER_FADE_OUT_START) / (CHAPTER_FADE_OUT_END - CHAPTER_FADE_OUT_START)
+            );
+      chaptersEl.style.opacity = fade;
+    }
+
+    if (!updateChapters) {
+      // Pas de chapitres (hero) : la vidéo joue une seule fois et se fige
+      // sur la dernière frame (pas de boucle, voir l'attribut retiré côté
+      // HTML) — pas de scroll à écouter ici.
+      video.preload = "auto";
+      attachNetworkRecovery(video);
+      video.play().catch(() => {
+        retryPlayOnGesture(() => video.play().catch(() => {}));
+      });
+      return;
+    }
+
+    // Chapitres (drone) : la vidéo est pilotée par le scroll (currentTime
+    // proportionnel à la progression dans la section), pas jouée en boucle
+    // toute seule — sinon l'image affichée ne correspond plus au chapitre
+    // en cours de texte (ex: la bande "Électricité générale" affichée alors
+    // que la vidéo montre encore le toit solaire), et un retour en arrière
+    // ne "reculait" pas l'image. Un seul fichier vidéo, juste piloté par
+    // currentTime au lieu d'une séquence d'images — pas plus lourd qu'une
+    // lecture en boucle classique.
+    video.preload = "auto";
+    let videoReady = false;
+    // Amorce : sur iOS Safari, une <video> qui n'a jamais joué peut ignorer
+    // les changements de currentTime — le décodeur ne s'active qu'après un
+    // premier play(). Un démarrage puis une pause quasi immédiate (invisible
+    // à l'écran, juste après la frame 0) réveille le décodeur sans jamais
+    // vraiment jouer la vidéo, et rend le scrub par currentTime fiable
+    // ensuite. Sans ça, le texte des chapitres changeait au scroll mais
+    // l'image restée figée sur la 1ère frame ne suivait pas.
+    video
+      .play()
+      .then(() => {
+        video.pause();
+        videoReady = true;
+      })
+      .catch(() => {
+        videoReady = true;
+        retryPlayOnGesture(() => {
+          video
+            .play()
+            .then(() => video.pause())
+            .catch(() => {});
+        });
+      });
+
+    let ticking = false;
+    function onScrollMobile() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const rect = section.getBoundingClientRect();
+        const scrollableDistance = section.offsetHeight - window.innerHeight;
+        const progress =
+          scrollableDistance > 0
+            ? Math.min(Math.max(-rect.top / scrollableDistance, 0), 1)
+            : 0;
+        updateChapters(progress);
+        updateChaptersFadeOutMobile(progress);
+        if (videoReady && video.duration) {
+          // Marge de sécurité avant la toute dernière frame : tomber pile
+          // sur la durée totale peut déclencher un comportement de fin de
+          // lecture (et un retour visible à la 1ère image) selon les
+          // navigateurs, même sans l'attribut loop.
+          const target = Math.min(progress * video.duration, video.duration - 0.15);
+          video.currentTime = Math.max(target, 0);
+        }
+        ticking = false;
+      });
+    }
+
+    updateChapters(0);
+    window.addEventListener("scroll", onScrollMobile, { passive: true });
     return;
   }
 
@@ -251,4 +420,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // chargement initial de la page.
     initScrollVideo(section, i === 0 ? "high" : "low");
   });
+  initProgressLinks();
 });
+
+// Liens du sous-menu "Nos services" qui pointent vers un chapitre précis
+// d'une section vidéo scrollée (ex: "Énergies renouvelables" dans #drone)
+// plutôt que le début de la section elle-même. Reprend exactement la même
+// formule progress <-> scroll que `onScroll` ci-dessus
+// (scrollableDistance = section.offsetHeight - innerHeight), pour que le
+// clic dépose au même endroit que là où ce chapitre s'affiche pendant un
+// scroll normal.
+function initProgressLinks() {
+  document.querySelectorAll("a[data-scroll-progress]").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      const section = document.querySelector(link.dataset.scrollTarget);
+      if (!section) return;
+      e.preventDefault();
+      const scrollableDistance = Math.max(
+        section.offsetHeight - window.innerHeight,
+        0
+      );
+      const top =
+        section.offsetTop + Number(link.dataset.scrollProgress) * scrollableDistance;
+      window.scrollTo({ top, behavior: "smooth" });
+    });
+  });
+}

@@ -31,35 +31,166 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: var(--sp-6) var(--sp-3) var(--sp-10);
-  max-width: 900px;
 }
 
+/* Pas de fond/halo derrière ce bloc — le contraste texte/vidéo est géré
+   uniquement par le text-shadow empilé sur chaque élément (eyebrow, titre,
+   sous-titre) ci-dessous. Un halo/rectangle avait été essayé et jugé trop
+   voyant ("gros pâté"/"moche") quelle que soit sa forme (carte nette ou
+   dégradé radial) ; le text-shadow attaché au texte lui-même s'adapte
+   automatiquement à n'importe quelle frame vidéo derrière, sans jamais
+   nécessiter de recaler une forme à la main. Largeur généreuse (960px) :
+   un titre qui tient sur 2 lignes plutôt que 3 laisse plus de plan visible
+   en hauteur. Apparaît en fondu après un temps mort (voir js/hero-intro.js)
+   pour laisser le plan respirer seul avant que le texte n'arrive. */
+.hero__panel {
+  align-self: flex-start;
+  max-width: 960px;
+  opacity: 0;
+  transition: opacity 600ms var(--ease-out);
+}
+.hero__panel.is-visible {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__panel {
+    opacity: 1;
+    transition: none;
+  }
+}
+
+/* Le fond/badge a été retiré : le vrai souci n'était pas la force de
+   l'ombre mais la couleur de base (teal clair) trop proche des tons bois
+   de la vidéo — deux tons clairs voisins ne se détachent jamais bien,
+   même avec une ombre correcte. Couleur plus saturée/claire + graisse
+   plus lourde (600) percent mieux un fond chargé. Le 3e niveau d'ombre est
+   un léger glow teal (pas noir) : ça donne de la présence ("signature
+   lumineuse") sans jamais rassombrir la vidéo autour comme le ferait un
+   glow noir plus fort. */
 .hero__eyebrow {
+  display: inline-block;
+  width: fit-content;
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--blue-light);
+  color: #4dede1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 1), 0 1px 4px rgba(0, 0, 0, 0.9),
+    0 0 16px rgba(77, 237, 225, 0.35);
   margin-bottom: var(--sp-2);
+}
+
+/* Machine à écrire (voir js/hero-intro.js pour le calcul de la largeur
+   cible et du nombre d'étapes) — sans curseur clignotant, jugé trop
+   voyant une fois le mot entièrement affiché. */
+.hero__eyebrow--typewriter {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  vertical-align: bottom;
+}
+@keyframes hero-eyebrow-type {
+  to { width: var(--eyebrow-final-width); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__eyebrow--typewriter {
+    width: auto;
+    animation: none !important;
+  }
 }
 
 .hero__title {
   color: var(--white);
   margin-bottom: var(--sp-3);
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 12px rgba(0, 0, 0, 0.6),
+    0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Corps de texte plus fin qu'un titre : un contour serré marche mieux
+   qu'un flou large (un flou large sur du petit corps devient bavé,
+   illisible). Cette ligne tombe sur la zone la plus texturée du hero
+   (bâche + pierres) — la plus dure des trois à faire ressortir, donc
+   ombre encore renforcée + graisse 500 (un trait plus épais aide plus
+   qu'une ombre plus forte sur un fond aussi chargé). */
+.hero__subtitle {
+  color: var(--white);
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 1), 0 2px 6px rgba(0, 0, 0, 0.9),
+    0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+/* Apparition du titre au chargement : chaque mot se dévoile avec un flou
+   (voir js/hero-intro.js), en cascade. */
+.hero__title .word {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(10px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.65, 0.3, 1),
+    filter 0.8s cubic-bezier(0.2, 0.65, 0.3, 1),
+    transform 0.8s cubic-bezier(0.2, 0.65, 0.3, 1);
+  transition-delay: calc(var(--i) * 90ms);
+}
+.hero__title.is-visible .word {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+
+/* Sous-titre : vague plus légère, mot par mot, juste après le titre. */
+.hero__subtitle .word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition-delay: calc(600ms + var(--i) * 45ms);
+}
+.hero__subtitle.is-visible .word {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__title .word,
+  .hero__subtitle .word {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+  }
 }
 
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  opacity: 0;
+  transition: opacity 600ms var(--ease-out);
+  transition-delay: 450ms;
+}
+.hero__actions.is-visible {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__actions {
+    opacity: 1;
+    transition: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero { height: 100vh; }
+  .hero { height: 100vh; height: 100dvh; }
 }
 
 @media (max-width: 768px) {
-  .hero { height: 100vh; }
+  .hero { height: 100vh; height: 100dvh; }
   .hero__content { padding: var(--sp-4) var(--sp-2) var(--sp-6); }
+  /* Revenu au centrage par défaut : un décalage à 30% coupait les panneaux
+     solaires à droite du cadre — le centrage neutre reste le plus sûr tant
+     qu'on n'a pas une valeur confirmée en le regardant réellement sur le
+     téléphone. */
+  .hero .scrollvid__video { object-position: 50% center; }
 }

@@ -36,40 +36,59 @@
   left: var(--sp-3);
   right: var(--sp-3);
   bottom: var(--sp-10);
-  max-width: 620px;
+  /* Mesuré empiriquement : "RENOUVELABLES" (fs-2xl) fait 649px de large —
+     720px laisse une vraie marge (~70px) plutôt que de coller pile à la
+     largeur mesurée. */
+  max-width: 720px;
   pointer-events: none;
+  /* Contraste géré par le text-shadow de chaque élément (titre/texte),
+     pas par un fond — ce conteneur ne fait plus que positionner et
+     minuter l'apparition. Durée courte en sortie pour ne pas décaler le
+     début de l'enchaînement mot-par-mot du titre (qui commence dès
+     80ms). */
+  opacity: 0;
+  transition: opacity 350ms var(--ease-out);
+}
+
+.scrollvid__chapter.is-active {
+  opacity: 1;
+}
+
+/* "Électricité générale" — placé en haut à droite plutôt qu'en bas à
+   gauche, pour varier la composition entre les deux chapitres. Marge de
+   sécurité large + largeur réduite : le cadrage du mur change selon le
+   ratio d'écran (vidéo en object-fit:cover), donc mieux vaut rester bien
+   à l'intérieur plutôt que de coller au bord et risquer de déborder sur
+   le toit à certaines largeurs. */
+.scrollvid__chapter[data-from="0.7"] {
+  left: auto;
+  right: 15vw;
+  bottom: auto;
+  top: 260px;
+  /* +48px vs avant (500px) pour compenser le padding de la glass card
+     ajouté ci-dessus : la largeur utile pour le titre reste identique à
+     ce qui avait été mesuré/ajusté (voir CLAUDE.md — re-mesurer
+     title.scrollWidth si la copie ou la taille de police changent). */
+  width: 548px;
+  max-width: calc(100% - 14vw);
+  text-align: center;
+}
+
+.scrollvid__chapter[data-from="0.7"] .scrollvid__chapter-text {
+  margin-inline: auto;
+  font-weight: 700;
 }
 
 .scrollvid__chapter.is-active {
   pointer-events: auto;
 }
 
-.scrollvid__chapter-eyebrow {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--blue-light);
-  margin-bottom: var(--sp-2);
-  opacity: 0;
-  filter: blur(6px);
-  transform: translateY(10px);
-  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out),
-    filter 600ms var(--ease-out);
-}
-
-.scrollvid__chapter.is-active .scrollvid__chapter-eyebrow {
-  opacity: 1;
-  filter: blur(0);
-  transform: translateY(0);
-}
-
 .scrollvid__chapter-title {
   color: var(--white);
   font-size: var(--fs-2xl);
   margin-bottom: var(--sp-2);
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 12px rgba(0, 0, 0, 0.6),
+    0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 /* Effet d'apparition : chaque mot glisse hors d'un masque, flou -> net */
@@ -103,9 +122,13 @@
 .scrollvid__chapter-title .word-mask:nth-child(4) .word { transition-delay: 380ms; }
 
 .scrollvid__chapter-text {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.95);
   font-size: var(--fs-md);
   max-width: 44ch;
+  /* Contour serré plutôt que flou large : sur du petit corps, un flou
+     large devient bavé/illisible. */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8),
+    0 2px 8px rgba(0, 0, 0, 0.5);
   opacity: 0;
   filter: blur(4px);
   transform: translateY(14px);
@@ -120,11 +143,45 @@
   transform: translateY(0);
 }
 
+.scrollvid__chapter-cta {
+  display: inline-flex;
+  margin-top: var(--sp-4);
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(14px);
+  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out),
+    filter 600ms var(--ease-out);
+  transition-delay: 620ms;
+}
+
+.scrollvid__chapter.is-active .scrollvid__chapter-cta {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+
+/* Sortie rapide et sans décalage — en scroll arrière, le cadrage vidéo
+   change vite (retour vers le toit) ; la disparition doit suivre au même
+   rythme plutôt que garder la durée/le décalage pensés pour l'entrée,
+   sous peine de laisser le texte affiché en surimpression du toit pendant
+   la remontée. */
+.scrollvid__chapter:not(.is-active) .scrollvid__chapter-title .word,
+.scrollvid__chapter:not(.is-active) .scrollvid__chapter-text,
+.scrollvid__chapter:not(.is-active) .scrollvid__chapter-cta,
+.scrollvid__chapter:not(.is-active) {
+  transition-duration: 150ms;
+  transition-delay: 0ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .drone { height: 100vh; }
-  .scrollvid__chapter-eyebrow,
+  .drone { height: 100vh; height: 100dvh; }
+  .scrollvid__chapter {
+    opacity: 1;
+    transition: none;
+  }
   .scrollvid__chapter-title .word,
-  .scrollvid__chapter-text {
+  .scrollvid__chapter-text,
+  .scrollvid__chapter-cta {
     transition: opacity 200ms linear;
     filter: none !important;
     transform: none !important;
@@ -132,18 +189,31 @@
 }
 
 @media (max-width: 768px) {
-  .drone { height: 100vh; }
-  .scrollvid__chapter { bottom: var(--sp-6); max-width: none; }
-  .scrollvid__chapter-title { font-size: var(--fs-xl); }
+  /* Assez de hauteur pour dérouler les 2 chapitres au scroll — pas besoin
+     d'autant que le desktop puisqu'il n'y a pas de vidéo à scrubber ici
+     (voir js/scroll-video.js), juste les textes qui s'enchaînent au fil du
+     scroll, sur l'image statique de fond. */
+  .drone { height: 220vh; }
+  .scrollvid__chapter { bottom: var(--sp-6); max-width: none; left: var(--sp-2); right: var(--sp-2); }
+  /* fs-xl (40px) fixe faisait déborder "RENOUVELABLES" hors de l'écran sur
+     mobile (mot d'un seul tenant, pas de retour à la ligne possible) —
+     clamp() en vw pour que ça s'adapte à la largeur réelle du téléphone
+     plutôt qu'une seule valeur qui ne marche que sur certains écrans. */
+  .scrollvid__chapter-title { font-size: clamp(22px, 7.2vw, 32px); }
   .scrollvid__chapter-text { font-size: var(--fs-base); }
-  /* Sur mobile la vidéo tourne en boucle sans scrub : on affiche le 1er chapitre en fixe */
-  .scrollvid__chapter[data-from="0.12"] { pointer-events: auto; }
-  .scrollvid__chapter[data-from="0.12"] .scrollvid__chapter-eyebrow,
-  .scrollvid__chapter[data-from="0.12"] .scrollvid__chapter-title .word,
-  .scrollvid__chapter[data-from="0.12"] .scrollvid__chapter-text {
-    opacity: 1;
-    filter: none;
-    transform: none;
+  /* Le 2e chapitre a une mise en page desktop dédiée (haut-droite, largeur
+     fixe 548px, pensée pour un grand écran) — sur mobile il reprend la
+     même position que le 1er (bas, pleine largeur) plutôt que de déborder. */
+  .scrollvid__chapter[data-from="0.7"] {
+    left: var(--sp-2);
+    right: var(--sp-2);
+    top: auto;
+    bottom: var(--sp-6);
+    width: auto;
+    max-width: none;
+    text-align: left;
   }
-  .scrollvid__chapter:not([data-from="0.12"]) { display: none; }
+  .scrollvid__chapter[data-from="0.7"] .scrollvid__chapter-text {
+    margin-inline: 0;
+  }
 }

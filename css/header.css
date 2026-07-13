@@ -4,20 +4,218 @@
   left: 0;
   right: 0;
   z-index: 10;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--sp-4);
   padding: var(--sp-2) var(--sp-3);
   background: linear-gradient(180deg, rgba(13, 59, 62, 0.85) 0%, rgba(13, 59, 62, 0) 100%);
 }
 
 .site-header__logo {
   margin-left: 6vw;
+  flex-shrink: 0;
+  min-width: max-content;
 }
 
 .site-header__logo img {
   height: 108px;
   width: auto;
+}
+
+/* Fond uni sombre plutôt qu'un cadre rouge — le cadre faisait "daté" et
+   cassait le côté épuré du header transparent. Le fond plus opaque (0.55
+   au lieu de 0.35) compense la perte de définition du bord pour que la
+   pilule reste lisible sur n'importe quelle vidéo derrière. */
+.site-header__nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-5);
+  padding: var(--sp-3) var(--sp-6);
+  border-radius: 999px;
+  background: rgba(13, 59, 62, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+/* Liseré animé bleu/rouge qui tourne autour de la pilule — remet un peu
+   de mouvement/signature de marque sur le header maintenant que le cadre
+   plein rouge est parti, sans revenir à un cadre statique daté. Anneau
+   obtenu par un conic-gradient masqué pour ne garder que la bordure (la
+   technique "border-beam"), pas un fond plein. @property est nécessaire
+   pour que l'angle s'anime en douceur plutôt que de sauter d'une valeur
+   à l'autre (une custom property non enregistrée n'est pas interpolable). */
+@property --nav-border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.site-header__nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--nav-border-angle),
+    var(--red),
+    var(--blue),
+    var(--red)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: nav-border-spin 5s linear infinite;
+}
+
+@keyframes nav-border-spin {
+  to { --nav-border-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header__nav::before {
+    animation: none;
+  }
+}
+
+.site-header__nav a {
+  position: relative;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--fs-base);
+  white-space: nowrap;
+  opacity: 0.88;
+  transition: opacity var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.site-header__nav a:hover {
+  opacity: 1;
+  color: var(--blue-light);
+}
+
+/* Trait qui se dessine sous le lien au survol — remplace le cadre rouge
+   comme indicateur d'interaction, plus épuré. */
+.site-header__nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  background: var(--blue-light);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.site-header__nav a:hover::after {
+  transform: scaleX(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header__nav a::after {
+    transition: none;
+  }
+}
+
+/* "Nos services" ouvre un sous-menu au survol/focus vers les 5 sections
+   qui correspondent chacune à un métier — deux d'entre elles (Énergies
+   renouvelables, Électricité générale) sont des "chapitres" à l'intérieur
+   de la vidéo scrollée du drone (#drone), pas des sections à part entière
+   : `data-scroll-progress` + `js/scroll-video.js` calculent la position de
+   scroll exacte correspondant à ce chapitre, un simple ancre #drone ne
+   ferait que déposer sur le tout début de la section. */
+.site-header__nav-item {
+  position: relative;
+}
+
+.site-header__nav-item::after {
+  content: "▾";
+  margin-left: 4px;
+  font-size: 0.7em;
+  opacity: 0.7;
+}
+
+.site-header__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 6px);
+  min-width: 240px;
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(13, 59, 62, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  visibility: hidden;
+  /* Délai avant fermeture : entre le lien et le sous-menu il y a un espace
+     (margin-top) qui n'appartient à aucun élément survolable — en
+     traversant cet espace en diagonale, la souris quitte brièvement toute
+     zone de :hover et le sous-menu se refermait avant d'être atteint. Le
+     délai laisse le temps d'y arriver ; il ne s'applique qu'à la
+     fermeture (voir la règle :hover/:focus-within ci-dessous qui remet le
+     délai à 0 pour une ouverture instantanée). Pas de pointer-events ici :
+     visibility:hidden bloque déjà toute interaction, et contrairement à
+     pointer-events, il respecte bien le délai de transition dans ce
+     navigateur (vérifié — pointer-events bascule instantanément quel que
+     soit le délai déclaré, ça aurait rendu le menu invisible-mais-encore-
+     cliquable pendant la fenêtre de grâce, l'inverse de ce qu'on veut). */
+  transition: opacity var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out),
+              visibility var(--dur-fast) var(--ease-out);
+  transition-delay: 300ms;
+}
+
+.site-header__nav-item:hover .site-header__dropdown,
+.site-header__nav-item:focus-within .site-header__dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
+}
+
+.site-header__dropdown a {
+  display: block;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: var(--fs-sm);
+  opacity: 0.92;
+}
+
+.site-header__dropdown a:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Glitch au survol du lien "Électricité générale" — clin d'œil au thème
+   électrique de ce chapitre (voir #drone). Couleurs de marque uniquement,
+   pas de rouge/bleu génériques importés du modèle d'origine. */
+.site-header__dropdown a[data-scroll-progress="0.7"]:hover {
+  animation: nav-glitch 0.35s steps(4, end);
+}
+@keyframes nav-glitch {
+  0% { transform: translate(0); text-shadow: none; }
+  20% { transform: translate(-2px, 1px); text-shadow: 2px 0 var(--red), -2px 0 var(--blue); }
+  40% { transform: translate(2px, -1px); text-shadow: -2px 0 var(--red), 2px 0 var(--blue); }
+  60% { transform: translate(-1px, 0); text-shadow: 1px 0 var(--red), -1px 0 var(--blue); }
+  80% { transform: translate(1px, 0); text-shadow: -1px 0 var(--red), 1px 0 var(--blue); }
+  100% { transform: translate(0); text-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header__dropdown a[data-scroll-progress="0.7"]:hover {
+    animation: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -27,12 +225,24 @@
   .site-header__logo img {
     height: 78px;
   }
+  .site-header__nav {
+    display: none;
+  }
 }
 
 .site-header__actions {
+  /* Fixé sur la 3e colonne de la grille explicitement : sur mobile,
+     .site-header__nav (2e colonne) passe en display:none et sort donc de
+     la grille — sans grid-column fixe, ce bloc glissait dans la colonne du
+     milieu (celle du nav) au lieu de rester à droite. */
+  grid-column: 3;
   display: flex;
   align-items: center;
+  justify-self: end;
   gap: var(--sp-3);
+  flex-shrink: 0;
+  min-width: max-content;
+  margin-right: 6vw;
 }
 
 .site-header__phone {
@@ -40,6 +250,7 @@
   font-family: var(--font-mono);
   font-weight: 500;
   font-size: var(--fs-base);
+  white-space: nowrap;
 }
 .site-header__phone:hover {
   color: var(--blue-light);
@@ -47,4 +258,153 @@
 
 @media (max-width: 768px) {
   .site-header__phone { display: none; }
+  .site-header__actions {
+    margin-right: var(--sp-2);
+  }
+  /* La pilule + le hamburger ne tiennent pas côte à côte sur un écran de
+     ~390px (ça débordait hors du cadre). Le CTA est déplacé à l'intérieur
+     du panneau plein écran (.mobile-nav__cta) plutôt que d'écraser la
+     largeur disponible dans le header. */
+  .site-header__actions .btn-pill {
+    display: none;
+  }
+}
+
+/* Bouton hamburger — sur mobile, .site-header__nav est masqué (display:none)
+   sans aucun remplacement : personne ne pouvait naviguer vers une section
+   ni cliquer Contact. Ce bouton ouvre .mobile-nav (panneau plein écran). */
+.site-header__burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.site-header__burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--white);
+  transition: transform var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+@media (max-width: 768px) {
+  .site-header__burger { display: flex; }
+}
+
+/* Panneau plein écran — liens empilés, tap targets généreux (>=44px de
+   haut). Les 5 sous-liens "Nos services" sont affichés directement (pas
+   de sous-menu à ouvrir en plus : un menu dans un menu est pénible au
+   tactile), légèrement en retrait pour montrer qu'ils sont rattachés.
+   Au-dessus du header (z-index) — sinon le logo du header se voyait en
+   transparence, mélangé au texte du 1er lien. Fermeture via son propre
+   bouton (.mobile-nav__close) plutôt que le hamburger du header. */
+.mobile-nav {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8) var(--sp-4);
+  background: var(--teal-deep);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity var(--dur-base) var(--ease-out),
+    visibility var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+.mobile-nav.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav { transition: none; }
+}
+
+.mobile-nav__close {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-3);
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  color: var(--white);
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mobile-nav__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-nav__top {
+  padding: var(--sp-2) 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--fs-lg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.mobile-nav__sub {
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-4);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--fs-base);
+}
+
+.mobile-nav__cta {
+  margin-top: var(--sp-5);
+  justify-content: center;
+  width: 100%;
+}
+
+.mobile-nav__phone {
+  margin-top: var(--sp-4);
+  color: var(--blue-light);
+  font-family: var(--font-mono);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (min-width: 769px) {
+  .mobile-nav { display: none; }
+}
+
+/* Bouton "pill" blanc plein, façon barre de navigation classique */
+.btn-pill {
+  background: var(--white);
+  color: var(--teal-deep);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.btn-pill:hover {
+  background: var(--blue-light);
+  color: var(--teal-deep);
+  transform: translateY(-2px);
 }

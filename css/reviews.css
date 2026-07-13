@@ -1,6 +1,17 @@
+/* Fond teal profond plutôt que la photo trop claire/délavée d'origine —
+   la photo d'équipe reste en dessous (juste texture/profondeur, très
+   discrète à travers le voile) plutôt que d'être retirée : on garde une
+   vraie photo dans le parcours (cf. section suivante) sans le côté
+   "délavé" pointé par l'audit. */
 .reviews {
   padding: var(--sp-10) 0 var(--sp-12);
-  background: var(--blue-mid);
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--teal-deep) 88%, transparent),
+      color-mix(in srgb, var(--teal-deep) 88%, transparent)
+    ),
+    url("../assets/img/photos/equipe-ets-leveque-v4.jpg") center / cover no-repeat;
+  background-color: var(--teal-deep);
   position: relative;
   z-index: 3;
   /* Recouvrement réduit au minimum (juste l'arrondi) : les avis n'arrivent
@@ -47,6 +58,28 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   box-shadow: 0 8px 20px -8px rgba(255, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Rideau qui glisse pour découvrir le badge — synchronisé sur le fondu du
+   conteneur .reveal parent (voir js/reveal.js), pas de JS dédié ici. */
+.reviews__badge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--red-dark);
+  transform: translateX(0);
+  transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+}
+.reveal.is-visible .reviews__badge::after {
+  transform: translateX(101%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reviews__badge::after {
+    transform: translateX(101%);
+    transition: none;
+  }
 }
 
 .reviews__heading {
@@ -65,7 +98,59 @@
   opacity: 0.85;
 }
 
-.reviews__stars { color: var(--red); letter-spacing: 2px; }
+.reviews__stars {
+  display: inline-block;
+  color: var(--red);
+  letter-spacing: 2px;
+  perspective: 400px;
+}
+
+/* Étoiles : rotation 3D lettre par lettre au scroll (voir js/scroll-effects.js
+   pour le découpage en spans ; le déclenchement réutilise le même
+   .reveal.is-visible que le reste du bloc). */
+.reviews__stars .flip-char {
+  display: inline-block;
+  opacity: 0;
+  transform: rotateY(90deg);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: calc(var(--i) * 90ms);
+}
+.reveal.is-visible .reviews__stars .flip-char {
+  opacity: 1;
+  transform: rotateY(0deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reviews__stars .flip-char {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* "4.3/5" : surligneur qui balaie le chiffre, même déclencheur. */
+.reviews__rating {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--red) 55%, transparent) 50%,
+    transparent 50%
+  );
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  transition: background-position 1s ease-in-out;
+  transition-delay: 550ms;
+}
+.reveal.is-visible .reviews__rating {
+  background-position: 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reviews__rating {
+    background-position: 0 0;
+    transition: none;
+  }
+}
 
 .reviews__columns {
   display: flex;
@@ -126,6 +211,14 @@
   right: 0;
   height: 4px;
   background: linear-gradient(90deg, var(--red) 0%, var(--red) 50%, var(--blue) 50%, var(--blue) 100%);
+}
+
+.review-card__stars {
+  color: #000;
+  letter-spacing: 2px;
+  font-size: var(--fs-sm);
+  margin-bottom: var(--sp-1);
+  text-align: center;
 }
 
 .review-card__text {

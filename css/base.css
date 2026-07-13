@@ -15,6 +15,9 @@ body {
 
 img { max-width: 100%; display: block; }
 
+/* Empêche le scroll de la page derrière le panneau de nav mobile ouvert. */
+body.mobile-nav-open { overflow: hidden; }
+
 h1, h2, h3 {
   font-family: var(--font-display);
   font-stretch: 125%;
@@ -75,6 +78,49 @@ a { color: var(--teal-active); text-decoration: none; }
   color: var(--blue-light);
 }
 
+/* Bouton "glow" — même rouge que les autres CTA du site (cf. "Nous
+   contacter" du hero), forme pilule, avec un léger halo pour rester visible
+   posé sur une vidéo comme sur un fond blanc. */
+.btn-glow {
+  background: var(--red);
+  color: var(--white);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 0 24px 4px rgba(255, 0, 0, 0.35);
+}
+.btn-glow:hover {
+  background: var(--red-dark);
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.24),
+    0 0 30px 6px rgba(255, 0, 0, 0.5);
+}
+
+/* Halo un peu plus contenu sur mobile : sur un petit écran, le même glow
+   proportionnellement plus large par rapport au bouton lisait comme un
+   effet néon qui bave. Desktop non touché (déjà validé). */
+@media (max-width: 768px) {
+  .btn-glow {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.16),
+      0 2px 10px rgba(255, 0, 0, 0.28);
+  }
+}
+
+/* Pulsation lumineuse — réservée au dernier appel à l'action de la page
+   (section contact), pour capter l'œil juste avant le pied de page. */
+.btn-pulse {
+  animation: btn-pulse-glow 2.2s ease-in-out infinite;
+}
+@keyframes btn-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.45); }
+  50% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-pulse { animation: none; }
+}
+
 /* Focus visibility partout */
 a:focus-visible,
 button:focus-visible,
@@ -96,6 +142,28 @@ button:focus-visible,
 }
 @media (prefers-reduced-motion: reduce) {
   .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Effet d'écriture lettre par lettre (générique, réutilisé sur certains titres de section) */
+.type-write .word {
+  display: inline-block;
+}
+.type-write .char {
+  opacity: 0;
+  display: inline-block;
+  transform: translateY(6px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.type-write .char.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .type-write .char {
     opacity: 1;
     transform: none;
     transition: none;

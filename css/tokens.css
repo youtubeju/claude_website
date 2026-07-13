@@ -5,6 +5,13 @@
   --blue-dark: #0F7A8C;  /* bleu du logo, hover/foncé */
   --blue-light: #6FCADB; /* bleu du logo, tint clair */
   --blue-mid: #49A6B2;   /* bleu intermédiaire, fond section avis */
+  --teal-chiffres: color-mix(in srgb, #268CA8 40%, var(--blue) 60%); /* dégradé fond chiffres → galerie, rapproché du bleu du logo */
+  --teal-chiffres-dark: color-mix(in srgb, var(--teal-chiffres) 58%, var(--white));
+  --teal-chiffres-dark2: color-mix(in srgb, var(--teal-chiffres) 38%, var(--white));
+  --teal-chiffres-dark3: color-mix(in srgb, var(--teal-chiffres) 32%, var(--white));
+  --teal-chiffres-mid: color-mix(in srgb, var(--teal-chiffres) 24%, var(--white));
+  --teal-chiffres-mid2: color-mix(in srgb, var(--teal-chiffres) 19%, var(--white));
+  --teal-chiffres-light: color-mix(in srgb, var(--teal-chiffres) 14%, var(--white));
   --teal-active: var(--blue);
   --red: #FF0000;        /* rouge du logo */
   --red-dark: #C40000;   /* rouge du logo, hover/foncé */
@@ -17,6 +24,7 @@
   --font-body: "IBM Plex Sans", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
   --font-numeral: "Inter", sans-serif; /* gros chiffres d'impact (section "en chiffres") */
+  --font-jakarta: "Plus Jakarta Sans", sans-serif; /* cartes "Nos services" (#realisations) */
 
   --fs-xs: 12px;
   --fs-sm: 14px;
@@ -43,7 +51,7 @@
   /* Mouvement */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 250ms;
-  --dur-base: 500ms;
+  --dur-base: 650ms; /* apparitions au scroll : 0.6-0.8s ease-out (retenue voulue, cf. audit) */
 
   --radius: 8px;
   --shadow-soft: 0 12px 32px -12px rgba(13, 59, 62, 0.25);

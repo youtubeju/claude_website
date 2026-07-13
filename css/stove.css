@@ -1,5 +1,9 @@
 .stove {
   height: 100vh;
+  /* dvh suit la hauteur réellement visible sur mobile (barre d'adresse
+     Safari) — sans ça, une bande blanche apparaissait entre le bas de la
+     vidéo et la section suivante. */
+  height: 100dvh;
   position: relative;
 }
 
@@ -9,6 +13,23 @@
   height: 100%;
   overflow: hidden;
   background: var(--teal-deep);
+}
+
+/* Pendant le verrouillage de scroll (voir js/video-inview.js), le cadre se
+   fixe directement sur le viewport réel plutôt que de dépendre de la
+   hauteur calculée de .stove : sur iOS Safari, démarrer la lecture de la
+   vidéo fait disparaître la barre d'adresse, agrandissant le viewport en
+   direct pendant la lecture — un calcul JS figé n'arrivait jamais à
+   suivre ce timing exactement, laissant une bande blanche visible juste
+   pendant la lecture. position:fixed + inset:0 est recalculé nativement
+   par le navigateur à chaque frame, donc toujours exact quel que soit
+   l'état de la barre d'adresse, sans JS à synchroniser. */
+.stove__frame.is-locked {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  z-index: 15;
 }
 
 .stove__video {
@@ -39,6 +60,12 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: var(--sp-6) var(--sp-3) var(--sp-10);
+}
+
+/* Pas de fond derrière ce bloc — contraste géré uniquement par le
+   text-shadow du titre/texte (voir plus bas). */
+.stove__panel {
+  align-self: flex-start;
   max-width: 640px;
 }
 
@@ -46,7 +73,8 @@
    même langage visuel que les chapitres de la vidéo drone : flou + léger
    glissement vers le haut, fondu. */
 .stove__title,
-.stove__text {
+.stove__text,
+.stove__cta {
   opacity: 0;
   filter: blur(8px);
   transform: translateY(16px);
@@ -57,19 +85,32 @@
 .stove__title {
   color: var(--white);
   margin-bottom: var(--sp-2);
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 12px rgba(0, 0, 0, 0.6),
+    0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
+/* Contour serré plutôt que flou large : sur du petit corps, un flou
+   large devient bavé/illisible. */
 .stove__text {
-  color: rgba(255, 255, 255, 0.85);
   font-size: var(--fs-md);
   max-width: 44ch;
   margin: 0;
+  color: var(--white);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8),
+    0 2px 8px rgba(0, 0, 0, 0.5);
   transition-delay: 150ms;
 }
 
+.stove__cta {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: var(--sp-4);
+  transition-delay: 300ms;
+}
+
 .stove__content.is-active .stove__title,
-.stove__content.is-active .stove__text {
+.stove__content.is-active .stove__text,
+.stove__content.is-active .stove__cta {
   opacity: 1;
   filter: blur(0);
   transform: translateY(0);
@@ -77,7 +118,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stove__title,
-  .stove__text {
+  .stove__text,
+  .stove__cta {
     opacity: 1;
     filter: none;
     transform: none;

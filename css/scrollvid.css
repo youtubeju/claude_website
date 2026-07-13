@@ -7,6 +7,12 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  /* dvh suit la hauteur réellement visible (barre d'adresse Safari qui
+     rétrécit/grandit) — sans ça, 100vh pouvait laisser une bande vide
+     entre la vidéo et la section suivante sur mobile. Gardé en 2e
+     déclaration : les navigateurs qui ne supportent pas dvh ignorent
+     cette ligne et gardent 100vh. */
+  height: 100dvh;
   overflow: hidden;
   background: var(--teal-deep);
   contain: paint;
@@ -55,4 +61,22 @@
 
 @media (prefers-reduced-motion: reduce) {
   .scrollvid__scroll-hint::after { animation: none; }
+}
+
+/* Sur mobile, le canvas est retiré (voir js/scroll-video.js) et seule la
+   <video> reste — le will-change/translateZ(0) ci-dessus n'existe que pour
+   fluidifier le drawImage répété du canvas au scrub desktop, il ne sert à
+   rien pour une vidéo qui joue simplement toute seule. Sur un vrai iPhone,
+   le garder ici a un effet de bord confirmé : la vidéo décode et avance
+   bien (currentTime progresse, readyState atteint 4) mais reste visuellement
+   figée sur sa toute première frame, comme si le calque composité par
+   WebKit n'était jamais repeint après sa création — un bug connu de
+   promotion de calque forcée sur un <video> qui vient de démarrer en
+   autoplay. Le retirer laisse le navigateur gérer la vidéo comme un calque
+   vidéo natif normal, sans cette promotion GPU superflue. */
+@media (max-width: 768px) {
+  .scrollvid__video {
+    will-change: auto;
+    transform: none;
+  }
 }

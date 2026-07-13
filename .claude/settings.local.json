@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /tmp/claude-1000/-workspaces-claude-website/ff8c74e9-1356-4695-be99-360442366f95/scratchpad)",
+      "Read(//workspaces/claude_website_repo/**)",
+      "Bash(nohup npx --yes serve -l 8080 .)"
+    ]
+  }
+}
